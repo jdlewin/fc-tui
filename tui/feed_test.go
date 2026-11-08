@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
@@ -73,4 +74,17 @@ func TestDetailContent(t *testing.T) {
 			t.Fatalf("detail missing %q:\n%s", want, got)
 		}
 	}
+}
+
+func TestLoadDotEnvStripsQuotes(t *testing.T) {
+	f, _ := os.CreateTemp("", "envq")
+	defer os.Remove(f.Name())
+	f.WriteString("NEYNAR_API_KEY=abc\nFARCASTER_DEVELOPER_MNEMONIC=\"word1 word2 word3\"\n")
+	f.Close()
+	os.Unsetenv("FARCASTER_DEVELOPER_MNEMONIC")
+	loadDotEnv(f.Name())
+	if got := os.Getenv("FARCASTER_DEVELOPER_MNEMONIC"); got != "word1 word2 word3" {
+		t.Fatalf("quotes not stripped: got %q", got)
+	}
+	os.Unsetenv("FARCASTER_DEVELOPER_MNEMONIC")
 }

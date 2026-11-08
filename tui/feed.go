@@ -49,6 +49,13 @@ func loadDotEnv(path string) {
 		}
 		k := strings.TrimSpace(kv[0])
 		v := strings.TrimSpace(kv[1])
+		// Strip one layer of matching shell quotes so quoted multi-word
+		// values (mnemonic) load clean in Go and source clean in sh.
+		if len(v) >= 2 {
+			if (v[0] == '"' && v[len(v)-1] == '"') || (v[0] == '\'' && v[len(v)-1] == '\'') {
+				v = v[1 : len(v)-1]
+			}
+		}
 		if _, ok := os.LookupEnv(k); !ok {
 			os.Setenv(k, v)
 		}
