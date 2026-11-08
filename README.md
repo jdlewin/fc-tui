@@ -17,6 +17,18 @@ cp .env.example .env
 # prints 15 casts, writes feed.json
 ```
 
+## Run TUI (Mac, Linux, tmux/zellij/herdr)
+
+No GUI needed — the Bubble Tea TUI replaces the Quickshell bar anywhere:
+
+```
+cd tui && go run .        # or: go build -o fc-tui . && ./fc-tui
+```
+
+Keys: `j/k` move · `enter` cast detail · `i` write · `r` refresh · `q` quit.
+New casts pop a `herdr notification show` alert when run inside herdr.
+Auto-refreshes every 2 min, same as the bar.
+
 ## Run UI (Linux box with Quickshell)
 
 `-c` looks in `~/.config/quickshell/`, not the current folder.
