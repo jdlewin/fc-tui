@@ -4,9 +4,9 @@ Goal: Read and post Farcaster from the Bubble Tea TUI (Mac, Linux, tmux)
 
 ## Now (TUI)
 
-- [ ] Backend refresh prints 15 casts on Mac @priority=high @estimate=1.5
-- [ ] TUI run-commit-polish: commit tui/ + PLAN + README, go vet/test clean, smoke < /dev/null
-- [ ] Post from the TUI and confirm round-trip
+- [x] Backend refresh prints 15 casts on Mac — verified 08 Nov, 15/15
+- [x] TUI run-commit-polish: commit tui/ + PLAN + README a53fd18, vet clean, 11 tests pass, headless smoke expected tty fail
+- [ ] Post from the TUI and confirm round-trip — BLOCKED, no SIGNER_UUID in .env, needs ./signer-setup.sh + phone approval
 
 ## Paused (Quickshell)
 
