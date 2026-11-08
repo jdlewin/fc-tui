@@ -5,7 +5,9 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -64,6 +66,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	postText := flag.String("post", "", "post a cast with this text")
+	flag.Parse()
+	if *postText != "" {
+		postCast(key, *postText)
+		return
+	}
+
 	// Following feed = timeline view. Limit 15 = low memory.
 	fid := os.Getenv("FEED_FID")
 	if fid == "" {
@@ -111,4 +120,36 @@ func main() {
 		}
 		fmt.Printf("%2d. @%s: %s\n", i+1, name, text)
 	}
+}
+
+func postCast(key, text string) {
+	signer := os.Getenv("SIGNER_UUID")
+	if signer == "" {
+		fmt.Fprintln(os.Stderr, "missing SIGNER_UUID — run ./signer-setup.sh once, then approve in Warpcast")
+		os.Exit(1)
+	}
+	if len([]rune(text)) > 320 {
+		fmt.Fprintln(os.Stderr, "cast too long (320 max)")
+		os.Exit(1)
+	}
+	payload, _ := json.Marshal(map[string]string{
+		"signer_uuid": signer,
+		"text":        text,
+	})
+	req, _ := http.NewRequest("POST", "https://api.neynar.com/v2/farcaster/cast/", bytes.NewReader(payload))
+	req.Header.Set("x-api-key", key)
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "post error:", err)
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		fmt.Fprintf(os.Stderr, "neynar %d: %s\n", resp.StatusCode, string(body))
+		os.Exit(1)
+	}
+	fmt.Println("posted:", string(body))
 }

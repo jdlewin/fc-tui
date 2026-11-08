@@ -2,11 +2,13 @@
 // Reads feed.json written by backend/. Keeps memory low: 15 rows, text only.
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 
 ShellRoot {
   property string fetchError: ""
+  property string postStatus: ""
 
   // Auto-refresh backend every 2 min (saves Neynar credits + RAM).
   Timer {
@@ -27,6 +29,20 @@ ShellRoot {
         fetchError = "Refresh failed (code " + exitCode + ") — run ./refresh.sh to see why";
       else
         fetchError = "";
+    }
+  }
+
+  Process {
+    id: poster
+    workingDirectory: Quickshell.shellDir
+    onExited: (exitCode, exitStatus) => {
+      if (exitCode !== 0)
+        postStatus = "Post failed — run ./post.sh manually to see why";
+      else {
+        postStatus = "Posted!";
+        composer.clear();
+        fetcher.running = true;
+      }
     }
   }
 
@@ -63,6 +79,34 @@ ShellRoot {
         visible: !feedFile.loaded && fetchError === ""
         text: "Loading feed.json… run ./refresh.sh first"
         color: "#888888"
+        font.pixelSize: 12
+      }
+
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: 8
+        TextField {
+          id: composer
+          Layout.fillWidth: true
+          placeholderText: "Quick cast as @jdl…"
+          maximumLength: 320
+          onAccepted: postButton.clicked()
+        }
+        Button {
+          id: postButton
+          text: poster.running ? "…" : "Post"
+          enabled: !poster.running && composer.text.trim() !== ""
+          onClicked: {
+            postStatus = "";
+            poster.exec(["sh", "post.sh", composer.text.trim()]);
+          }
+        }
+      }
+
+      Text {
+        visible: postStatus !== ""
+        text: postStatus
+        color: postStatus === "Posted!" ? "#4ade80" : "#f87171"
         font.pixelSize: 12
       }
 

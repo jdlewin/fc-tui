@@ -39,6 +39,22 @@ Auto-refreshes every 2 min via `refresh.sh`.
 
 Change feed: `FEED_FID=your_fid ./refresh.sh`
 
+## Posting (quick write)
+
+One-time setup (creates ONE signer, you approve it in the phone app):
+```
+./signer-setup.sh
+# open the printed URL in Warpcast/Farcaster app, approve, press ENTER
+# saves SIGNER_UUID to .env
+```
+
+Then post from terminal or from the bar's composer box:
+```
+./post.sh "hello farcaster"
+```
+
+The bar has a text box + Post button at the top. Status shows Posted! or red error.
+
 ## Files
 
 - `backend/main.go` — stdlib-only Neynar fetch, no SDK
