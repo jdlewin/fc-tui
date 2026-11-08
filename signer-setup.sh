@@ -14,11 +14,15 @@ if [ -z "${NEYNAR_API_KEY:-}" ]; then
   echo "missing NEYNAR_API_KEY in .env" >&2
   exit 1
 fi
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "need python3 (only for reading JSON) — install it and re-run" >&2
+  exit 1
+fi
 
 if [ -n "${SIGNER_UUID:-}" ]; then
   echo "checking existing SIGNER_UUID=$SIGNER_UUID"
-  st=$(curl -s "https://api.neynar.com/v2/farcaster/signer/?signer_uuid=$SIGNER_UUID" -H "x-api-key: $NEYNAR_API_KEY")
-  echo "$st" | head -c 400; echo
+  st=$(curl -sS "https://api.neynar.com/v2/farcaster/signer/?signer_uuid=$SIGNER_UUID" -H "x-api-key: $NEYNAR_API_KEY" 2>&1)
+  echo "$st" | head -c 500; echo
   case "$st" in
     *'"status":"approved"'*) echo "already approved — nothing to do"; exit 0;;
   esac
@@ -26,11 +30,22 @@ if [ -n "${SIGNER_UUID:-}" ]; then
 fi
 
 echo "creating signer…"
-resp=$(curl -s -X POST "https://api.neynar.com/v2/farcaster/signer/" -H "x-api-key: $NEYNAR_API_KEY" -H "Content-Type: application/json" -d '{}')
-echo "$resp"
-uuid=$(echo "$resp" | python3 -c "import sys,json;print(json.load(sys.stdin).get('signer_uuid',''))")
-url=$(echo "$resp" | python3 -c "import sys,json;print(json.load(sys.stdin).get('signer_approval_url',''))")
-if [ -z "$uuid" ]; then echo "create failed" >&2; exit 1; fi
+tmp=$(mktemp)
+code=$(curl -sS -o "$tmp" -w "%{http_code}" -X POST "https://api.neynar.com/v2/farcaster/signer/" \
+  -H "x-api-key: $NEYNAR_API_KEY" -H "Content-Type: application/json" -d '{}' 2>&1)
+echo "http code: $code"
+echo "--- response ---"
+cat "$tmp"; echo
+echo "----------------"
+if [ "$code" != "200" ]; then
+  echo "create failed with http $code (see response above)" >&2
+  rm -f "$tmp"
+  exit 1
+fi
+uuid=$(python3 -c "import sys,json;print(json.load(open('$tmp')).get('signer_uuid',''))" 2>&1)
+url=$(python3 -c "import sys,json;print(json.load(open('$tmp')).get('signer_approval_url',''))" 2>&1)
+rm -f "$tmp"
+if [ -z "$uuid" ]; then echo "create failed: no signer_uuid in response" >&2; exit 1; fi
 
 echo
 echo "1. Open this URL on your phone (Warpcast/Farcaster app):"
@@ -39,7 +54,7 @@ echo "2. Approve the signer. Then press ENTER here."
 read -r _
 
 for i in 1 2 3 4 5 6; do
-  st=$(curl -s "https://api.neynar.com/v2/farcaster/signer/?signer_uuid=$uuid" -H "x-api-key: $NEYNAR_API_KEY")
+  st=$(curl -sS "https://api.neynar.com/v2/farcaster/signer/?signer_uuid=$uuid" -H "x-api-key: $NEYNAR_API_KEY" 2>&1)
   echo "poll $i: $(echo "$st" | head -c 200)"
   case "$st" in
     *'"status":"approved"'*)
