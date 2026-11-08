@@ -170,3 +170,11 @@ func TestNotifPrimingHushesFirstLoad(t *testing.T) {
 		t.Fatal("second load with fresh mention should ring")
 	}
 }
+
+func TestDebugKeyFiresNotifCmd(t *testing.T) {
+	m := sizedModel(testCasts())
+	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'T'}})
+	if cmd == nil {
+		t.Fatal("T should produce a notification command")
+	}
+}
