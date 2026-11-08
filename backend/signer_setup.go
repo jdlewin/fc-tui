@@ -24,12 +24,13 @@ import (
 	"github.com/tyler-smith/go-bip39"
 )
 
-// EIP-712 domain for Farcaster SignedKeyRequest (matches @farcaster/hub-nodejs).
+// EIP-712 domain for Farcaster SignedKeyRequestValidator (matches Neynar docs
+// and @farcaster/hub-nodejs ViemLocalEip712Signer).
 const (
-	skrDomainName    = "Farcaster SignedKeyRequest"
+	skrDomainName    = "Farcaster SignedKeyRequestValidator"
 	skrDomainVersion = "1"
 	skrChainID       = 10
-	skrContract      = "0x00000000FcAf86937e41bA1B4b79bB40Ca2B9048Ba"
+	skrContract      = "0x00000000Fc700472606ED4FA22623Acf62c60553"
 	skrTypeString    = "SignedKeyRequest(uint256 requestFid,bytes key,uint256 deadline)"
 )
 

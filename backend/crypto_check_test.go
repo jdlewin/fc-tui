@@ -19,6 +19,15 @@ func TestDeriveTestMnemonic(t *testing.T) {
 	}
 }
 
+// Domain must match Neynar SignedKeyRequestValidator or register 400s.
+func TestSignerDomainMatchesValidator(t *testing.T) {
+	if skrDomainName != "Farcaster SignedKeyRequestValidator" {
+		t.Fatalf("domain name drift: got %q", skrDomainName)
+	}
+	if !strings.EqualFold(skrContract, "0x00000000Fc700472606ED4FA22623Acf62c60553") {
+		t.Fatalf("contract drift: got %s", skrContract)
+	}
+}
 // Roundtrip: signature must recover to the signing address.
 func TestSignKeyRequestRecovers(t *testing.T) {
 	privHex, addr, err := deriveKey("test test test test test test test test test test test junk")
