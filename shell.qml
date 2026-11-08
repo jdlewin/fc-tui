@@ -1,12 +1,13 @@
 // Quickshell frontend - runs on your Linux box, not on Mac.
 // Reads feed.json written by backend/. Keeps memory low: 15 rows, text only.
-// Run from repo root: quickshell -c .
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 
 ShellRoot {
+  property string fetchError: ""
+
   // Auto-refresh backend every 2 min (saves Neynar credits + RAM).
   Timer {
     interval: 120000
@@ -21,6 +22,12 @@ ShellRoot {
     workingDirectory: Quickshell.shellDir
     // Run once at startup too.
     Component.onCompleted: fetcher.running = true
+    onExited: (exitCode, exitStatus) => {
+      if (exitCode !== 0)
+        fetchError = "Refresh failed (code " + exitCode + ") — run ./refresh.sh to see why";
+      else
+        fetchError = "";
+    }
   }
 
   PanelWindow {
@@ -38,14 +45,22 @@ ShellRoot {
       spacing: 8
 
       Text {
-        text: "Farcaster — following"
+        text: "Farcaster — @jdl following"
         color: "white"
         font.pixelSize: 16
         font.bold: true
       }
 
       Text {
-        visible: !feedFile.loaded
+        visible: fetchError !== ""
+        text: fetchError
+        color: "#f87171"
+        font.pixelSize: 12
+        wrapMode: Text.Wrap
+      }
+
+      Text {
+        visible: !feedFile.loaded && fetchError === ""
         text: "Loading feed.json… run ./refresh.sh first"
         color: "#888888"
         font.pixelSize: 12
@@ -103,6 +118,13 @@ ShellRoot {
     watchChanges: true
     blockLoading: true
     onFileChanged: this.reload()
+    onLoadFailed: error => {
+      fetchError = "Can't read feed.json — run ./refresh.sh first";
+    }
+    onLoaded: {
+      if (feedCasts.length > 0)
+        fetchError = "";
+    }
   }
 
   readonly property var feedCasts: {

@@ -34,7 +34,7 @@ Option B — run by path, no install:
 quickshell -p "$PWD/shell.qml"
 ```
 
-Bar shows following-feed for fid 3 (dwr.eth demo).
+Bar shows following-feed for @jdl (fid 10695).
 Auto-refreshes every 2 min via `refresh.sh`.
 
 Change feed: `FEED_FID=your_fid ./refresh.sh`

@@ -64,11 +64,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Following feed for a demo FID = timeline view. Limit 15 = low memory.
-	// Works on current Neynar API (trending endpoint was removed).
+	// Following feed = timeline view. Limit 15 = low memory.
 	fid := os.Getenv("FEED_FID")
 	if fid == "" {
-		fid = "3" // dwr.eth, good demo
+		fid = "10695" // @jdl
 	}
 	url := "https://api.neynar.com/v2/farcaster/feed?feed_type=following&fid=" + fid + "&limit=15&with_recasts=true"
 
