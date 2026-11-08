@@ -283,6 +283,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		if msg.String() == "T" && !m.composerFocused {
+			n := notif{Type: "mention", Hash: "debug", Author: "tester", Text: "debug ping — sounds check"}
+			hs, mac := macSoundFor(n.Type)
+			return m, notifyTypedCmd(notifTitle(n), "@"+n.Author+": "+n.Text, hs, mac)
+		}
 		return m.updateKey(msg)
 	}
 
@@ -389,10 +394,6 @@ func (m Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.loading = true
 		m.fetchError = ""
 		return m, fetchFeedCmd(m.apiKey, m.fid, m.feedPath)
-	case "T":
-		n := notif{Type: "mention", Hash: "debug", Author: "tester", Text: "debug ping — sounds check"}
-		hs, mac := macSoundFor(n.Type)
-		return m, notifyTypedCmd(notifTitle(n), "@"+n.Author+": "+n.Text, hs, mac)
 	}
 	return m, nil
 }
