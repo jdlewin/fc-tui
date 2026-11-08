@@ -41,10 +41,12 @@ Change feed: `FEED_FID=your_fid ./refresh.sh`
 
 ## Posting (quick write)
 
-One-time setup (creates ONE signer, you approve it in the phone app):
+One-time setup (no mnemonic needed):
 ```
 ./signer-setup.sh
-# open the printed URL in Warpcast/Farcaster app, approve, press ENTER
+# follow the printed steps: dev.neynar.com -> your app -> Signers
+# approve in the phone app, then:
+./signer-setup.sh PASTE-UUID-HERE
 # saves SIGNER_UUID to .env
 ```
 

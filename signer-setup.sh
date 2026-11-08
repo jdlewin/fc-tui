@@ -1,7 +1,8 @@
 #!/bin/sh
-# One-time signer setup for @jdl. Creates ONE signer, you approve it in Warpcast/Farcaster app.
-# Costs an onchain tx on approve (Neynar may sponsor — check the approval screen).
-# Reuses existing SIGNER_UUID if already approved.
+# One-time signer setup for @jdl.
+# The approval URL comes from the Neynar dev portal (no mnemonic needed on this laptop).
+# Usage: ./signer-setup.sh [SIGNER_UUID]
+#    or: SIGNER_UUID=xxx ./signer-setup.sh
 set -u
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 cd "$SCRIPT_DIR"
@@ -14,61 +15,35 @@ if [ -z "${NEYNAR_API_KEY:-}" ]; then
   echo "missing NEYNAR_API_KEY in .env" >&2
   exit 1
 fi
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "need python3 (only for reading JSON) — install it and re-run" >&2
-  exit 1
+
+UUID="${1:-${SIGNER_UUID:-}}"
+if [ -z "$UUID" ]; then
+  echo "No signer yet. Do this once in the browser:"
+  echo "  1. Open https://dev.neynar.com and pick your app (same app as your API key)"
+  echo "  2. Find Signers -> create/add a signer for @jdl (fid 10695)"
+  echo "  3. Approve it in the Warpcast/Farcaster phone app"
+  echo "  4. Copy the signer UUID, then run:"
+  echo "       ./signer-setup.sh PASTE-UUID-HERE"
+  exit 0
 fi
 
-if [ -n "${SIGNER_UUID:-}" ]; then
-  echo "checking existing SIGNER_UUID=$SIGNER_UUID"
-  st=$(curl -sS "https://api.neynar.com/v2/farcaster/signer/?signer_uuid=$SIGNER_UUID" -H "x-api-key: $NEYNAR_API_KEY" 2>&1)
-  echo "$st" | head -c 500; echo
-  case "$st" in
-    *'"status":"approved"'*) echo "already approved — nothing to do"; exit 0;;
-  esac
-  echo "(existing signer not approved — creating a fresh one)"
-fi
-
-echo "creating signer…"
-tmp=$(mktemp)
-code=$(curl -sS -o "$tmp" -w "%{http_code}" -X POST "https://api.neynar.com/v2/farcaster/signer/" \
-  -H "x-api-key: $NEYNAR_API_KEY" -H "Content-Type: application/json" -d '{}' 2>&1)
-echo "http code: $code"
-echo "--- response ---"
-cat "$tmp"; echo
-echo "----------------"
-if [ "$code" != "200" ]; then
-  echo "create failed with http $code (see response above)" >&2
-  rm -f "$tmp"
-  exit 1
-fi
-uuid=$(python3 -c "import sys,json;print(json.load(open('$tmp')).get('signer_uuid',''))" 2>&1)
-url=$(python3 -c "import sys,json;print(json.load(open('$tmp')).get('signer_approval_url',''))" 2>&1)
-rm -f "$tmp"
-if [ -z "$uuid" ]; then echo "create failed: no signer_uuid in response" >&2; exit 1; fi
-
-echo
-echo "1. Open this URL on your phone (Warpcast/Farcaster app):"
-echo "   $url"
-echo "2. Approve the signer. Then press ENTER here."
-read -r _
-
-for i in 1 2 3 4 5 6; do
-  st=$(curl -sS "https://api.neynar.com/v2/farcaster/signer/?signer_uuid=$uuid" -H "x-api-key: $NEYNAR_API_KEY" 2>&1)
-  echo "poll $i: $(echo "$st" | head -c 200)"
-  case "$st" in
-    *'"status":"approved"'*)
-      echo "approved!"
-      if grep -q "^SIGNER_UUID=" .env 2>/dev/null; then
-        sed -i.bak "s/^SIGNER_UUID=.*/SIGNER_UUID=$uuid/" .env
-      else
-        echo "SIGNER_UUID=$uuid" >> .env
-      fi
-      echo "saved SIGNER_UUID to .env"
-      exit 0;;
-  esac
-  sleep 10
-done
-echo "not approved yet — re-run after approving. UUID: $uuid" >&2
-echo "URL: $url" >&2
-exit 1
+echo "checking signer $UUID…"
+st=$(curl -sS "https://api.neynar.com/v2/farcaster/signer/?signer_uuid=$UUID" -H "x-api-key: $NEYNAR_API_KEY" 2>&1)
+echo "$st" | head -c 500; echo
+case "$st" in
+  *'"status":"approved"'*)
+    echo "approved!"
+    if grep -q "^SIGNER_UUID=" .env 2>/dev/null; then
+      sed -i.bak "s/^SIGNER_UUID=.*/SIGNER_UUID=$UUID/" .env
+    else
+      echo "SIGNER_UUID=$UUID" >> .env
+    fi
+    echo "saved SIGNER_UUID to .env — try: ./post.sh \"hello from my bar\""
+    exit 0;;
+  *'"status":"pending_approval"'*)
+    echo "still pending — approve it in the phone app, then re-run this script" >&2
+    exit 1;;
+  *)
+    echo "signer not usable (see response above)" >&2
+    exit 1;;
+esac
