@@ -19,8 +19,19 @@ cp .env.example .env
 
 ## Run UI (Linux box with Quickshell)
 
+`-c` looks in `~/.config/quickshell/`, not the current folder.
+Pick one:
+
+Option A — install as named config:
 ```
-quickshell -c .
+mkdir -p ~/.config/quickshell
+ln -sfn "$PWD" ~/.config/quickshell/fc-tui
+quickshell -c fc-tui
+```
+
+Option B — run by path, no install:
+```
+quickshell -p "$PWD/shell.qml"
 ```
 
 Bar shows following-feed for fid 3 (dwr.eth demo).

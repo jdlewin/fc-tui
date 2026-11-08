@@ -18,6 +18,7 @@ ShellRoot {
   Process {
     id: fetcher
     command: ["sh", "refresh.sh"]
+    workingDirectory: Quickshell.shellDir
     // Run once at startup too.
     Component.onCompleted: fetcher.running = true
   }
