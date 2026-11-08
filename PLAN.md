@@ -16,4 +16,4 @@ Goal: Read and post Farcaster from the Bubble Tea TUI (Mac, Linux, tmux)
 
 ## Later
 
-- [ ] Review with a human
+- [x] Review with a human — eyeballed 08 Nov, list nav detail composer-cancel refresh all as expected
