@@ -7,7 +7,8 @@ Goal: Read and post Farcaster from the Bubble Tea TUI (Mac, Linux, tmux)
 - [x] Backend refresh prints 15 casts on Mac — verified 08 Nov, 15/15
 - [x] TUI run-commit-polish: commit tui/ + PLAN + README a53fd18, vet clean, 11 tests pass, headless smoke expected tty fail
 - [x] Post from the TUI and confirm round-trip — live 08 Nov as donniecast, cast ab0b6b6e, success true
-- [x] Harden composer path 08 Nov — 3 submit tests (15 pass), backend empty-cast guard, dotenv quote fix, README TUI-first
+- [x] Harden composer path 08 Nov — 3 submit tests, backend empty-cast guard, dotenv quote fix, README TUI-first
+- [x] Replies + quotes 08 Nov — TUI R/Q keys with esc-cancel, backend -parent/-quote-hash flags, post.sh --reply/--quote, 6 new tests, live-tested by jd same day
 
 ## Paused (Quickshell)
 

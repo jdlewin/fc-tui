@@ -88,6 +88,8 @@ func (m Model) composerView() string {
 	input := m.composer.View()
 	if !m.composerFocused {
 		input = styleDim.Render("> " + composerHint(m.composer.Value()))
+	} else if m.targetLabel != "" {
+		input = styleDim.Render(m.targetLabel) + "\n" + input
 	}
 	return input + "\n"
 }
@@ -107,7 +109,7 @@ func (m Model) helpView() string {
 	case m.mode == modeDetail:
 		keys = "↑↓ scroll · esc back · q quit"
 	default:
-		keys = "j/k move · enter detail · i write · r refresh · q quit"
+		keys = "j/k move · enter detail · i write · R reply · Q quote · r refresh · q quit"
 	}
 	return styleDim.Render(keys)
 }

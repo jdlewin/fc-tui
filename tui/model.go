@@ -54,6 +54,8 @@ type Model struct {
 	composerFocused  bool
 	postStatus       string
 	postIsErr        bool
+	target           postTarget
+	targetLabel      string
 	fetchError       string
 	loading          bool
 	seen             map[string]bool
@@ -103,9 +105,9 @@ func fetchFeedCmd(key, fid, path string) tea.Cmd {
 	}
 }
 
-func postCastCmd(key, signer, text string) tea.Cmd {
+func postCastCmd(key, signer string, t postTarget, text string) tea.Cmd {
 	return func() tea.Msg {
-		if err := postCast(key, signer, text); err != nil {
+		if err := postCastFull(key, signer, t, text); err != nil {
 			return postErrMsg{err}
 		}
 		return postedMsg{}
@@ -233,6 +235,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.composer.Reset()
 		m.composer.Blur()
 		m.composerFocused = false
+		m.target = postTarget{}
+		m.targetLabel = ""
 		return m, fetchFeedCmd(m.apiKey, m.fid, m.feedPath)
 
 	case postErrMsg:
@@ -267,6 +271,8 @@ func (m Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "esc":
 			m.composer.Blur()
 			m.composerFocused = false
+			m.target = postTarget{}
+			m.targetLabel = ""
 			return m, nil
 		case "enter":
 			text := m.composer.Value()
@@ -275,9 +281,13 @@ func (m Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.postIsErr = true
 				return m, nil
 			}
-			m.postStatus = "Posting…"
+			label := ""
+			if m.targetLabel != "" {
+				label = " (" + m.targetLabel + ")"
+			}
+			m.postStatus = "Posting" + label + "…"
 			m.postIsErr = false
-			return m, postCastCmd(m.apiKey, os.Getenv("SIGNER_UUID"), text)
+			return m, postCastCmd(m.apiKey, os.Getenv("SIGNER_UUID"), m.target, text)
 		}
 		var cmd tea.Cmd
 		m.composer, cmd = m.composer.Update(msg)
@@ -315,6 +325,28 @@ func (m Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "enter", "right", "l":
 		m.openDetail()
 	case "i", "/":
+		m.target = postTarget{}
+		m.targetLabel = ""
+		m.composerFocused = true
+		m.postStatus = ""
+		return m, m.composer.Focus()
+	case "R":
+		if len(m.casts) == 0 {
+			return m, nil
+		}
+		c := m.casts[m.cursor]
+		m.target = postTarget{Reply: &castRef{Hash: c.Hash, Fid: c.Author.Fid}}
+		m.targetLabel = "reply to @" + displayName(c)
+		m.composerFocused = true
+		m.postStatus = ""
+		return m, m.composer.Focus()
+	case "Q":
+		if len(m.casts) == 0 {
+			return m, nil
+		}
+		c := m.casts[m.cursor]
+		m.target = postTarget{Quote: &castRef{Hash: c.Hash, Fid: c.Author.Fid}}
+		m.targetLabel = "quote @" + displayName(c)
 		m.composerFocused = true
 		m.postStatus = ""
 		return m, m.composer.Focus()

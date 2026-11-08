@@ -88,3 +88,34 @@ func TestLoadDotEnvStripsQuotes(t *testing.T) {
 	}
 	os.Unsetenv("FARCASTER_DEVELOPER_MNEMONIC")
 }
+
+func TestBuildReplyPayload(t *testing.T) {
+	p := buildPostPayload("s", postTarget{Reply: &castRef{Hash: "0xabc", Fid: 7}}, "hi")
+	if p["parent"] != "0xabc" || p["parent_author_fid"] != 7 {
+		t.Fatalf("bad reply payload: %v", p)
+	}
+	if _, ok := p["embeds"]; ok {
+		t.Fatalf("reply should not carry embeds: %v", p)
+	}
+}
+
+func TestBuildQuotePayload(t *testing.T) {
+	p := buildPostPayload("s", postTarget{Quote: &castRef{Hash: "0xdef", Fid: 9}}, "hi")
+	emb, ok := p["embeds"].([]any)
+	if !ok || len(emb) != 1 {
+		t.Fatalf("quote should carry one embed: %v", p)
+	}
+	if _, ok := p["parent"]; ok {
+		t.Fatalf("quote should not carry parent: %v", p)
+	}
+}
+
+func TestBuildTopLevelPayload(t *testing.T) {
+	p := buildPostPayload("s", postTarget{}, "hi")
+	if _, ok := p["parent"]; ok {
+		t.Fatalf("top-level should not carry parent: %v", p)
+	}
+	if _, ok := p["embeds"]; ok {
+		t.Fatalf("top-level should not carry embeds: %v", p)
+	}
+}

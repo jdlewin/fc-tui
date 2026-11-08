@@ -33,7 +33,8 @@ No GUI needed — the Bubble Tea TUI replaces the Quickshell bar anywhere:
 cd tui && go run .        # or: go build -o fc-tui . && ./fc-tui
 ```
 
-Keys: `j/k` move · `enter` cast detail · `i` write · `r` refresh · `q` quit.
+Keys: `j/k` move · `enter` cast detail · `i` write · `R` reply · `Q` quote · `r` refresh · `q` quit.
+Replies target the highlighted cast as parent, quotes embed it. Esc cancels.
 New casts pop a `herdr notification show` alert when run inside herdr.
 Auto-refreshes every 2 min, same as the bar.
 

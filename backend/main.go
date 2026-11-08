@@ -74,6 +74,10 @@ func main() {
 	}
 
 	postText := flag.String("post", "", "post a cast with this text")
+	parent := flag.String("parent", "", "reply target cast hash (reply mode)")
+	parentFid := flag.Int64("parent-fid", 0, "reply target author fid")
+	quoteHash := flag.String("quote-hash", "", "quote target cast hash (quote mode)")
+	quoteFid := flag.Int64("quote-fid", 0, "quote target author fid")
 	setup := flag.Bool("signer-setup", false, "one-time signer setup (create+sign+register, print approval URL)")
 	flag.Parse()
 	if *setup {
@@ -81,7 +85,7 @@ func main() {
 		return
 	}
 	if *postText != "" {
-		postCast(key, *postText)
+		postCast(key, *postText, *parent, *parentFid, *quoteHash, *quoteFid)
 		return
 	}
 
@@ -134,7 +138,7 @@ func main() {
 	}
 }
 
-func postCast(key, text string) {
+func postCast(key, text, parent string, parentFid int64, quoteHash string, quoteFid int64) {
 	signer := os.Getenv("SIGNER_UUID")
 	if signer == "" {
 		fmt.Fprintln(os.Stderr, "missing SIGNER_UUID — run ./signer-setup.sh once, then approve in Warpcast")
@@ -148,11 +152,27 @@ func postCast(key, text string) {
 		fmt.Fprintln(os.Stderr, "cast too long (320 max)")
 		os.Exit(1)
 	}
-	payload, _ := json.Marshal(map[string]string{
+	if parent != "" && quoteHash != "" {
+		fmt.Fprintln(os.Stderr, "pick reply or quote, not both")
+		os.Exit(1)
+	}
+	payload := map[string]any{
 		"signer_uuid": signer,
 		"text":        text,
-	})
-	req, _ := http.NewRequest("POST", "https://api.neynar.com/v2/farcaster/cast/", bytes.NewReader(payload))
+	}
+	if parent != "" {
+		payload["parent"] = parent
+		if parentFid != 0 {
+			payload["parent_author_fid"] = parentFid
+		}
+	}
+	if quoteHash != "" {
+		payload["embeds"] = []any{map[string]any{
+			"cast_id": map[string]any{"fid": quoteFid, "hash": quoteHash},
+		}}
+	}
+	raw, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", "https://api.neynar.com/v2/farcaster/cast/", bytes.NewReader(raw))
 	req.Header.Set("x-api-key", key)
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{Timeout: 15 * time.Second}

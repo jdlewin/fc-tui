@@ -123,16 +123,49 @@ func validatePost(text string) error {
 }
 
 func postCast(key, signer, text string) error {
+	return postCastFull(key, signer, postTarget{}, text)
+}
+
+// postTarget selects a top-level cast (zero value), a reply, or a quote.
+// Only one of Reply, Quote may be set.
+type postTarget struct {
+	Reply *castRef
+	Quote *castRef
+}
+
+type castRef struct {
+	Hash string
+	Fid  int
+}
+
+// buildPostPayload is pure for tests: no network.
+func buildPostPayload(signer string, t postTarget, text string) map[string]any {
+	p := map[string]any{
+		"signer_uuid": signer,
+		"text":        strings.TrimSpace(text),
+	}
+	if t.Reply != nil {
+		p["parent"] = t.Reply.Hash
+		if t.Reply.Fid != 0 {
+			p["parent_author_fid"] = t.Reply.Fid
+		}
+	}
+	if t.Quote != nil {
+		p["embeds"] = []any{map[string]any{
+			"cast_id": map[string]any{"fid": t.Quote.Fid, "hash": t.Quote.Hash},
+		}}
+	}
+	return p
+}
+
+func postCastFull(key, signer string, t postTarget, text string) error {
 	if signer == "" {
 		return fmt.Errorf("missing SIGNER_UUID — run ./signer-setup.sh once, then approve in Warpcast")
 	}
 	if err := validatePost(text); err != nil {
 		return err
 	}
-	payload, _ := json.Marshal(map[string]string{
-		"signer_uuid": signer,
-		"text":        strings.TrimSpace(text),
-	})
+	payload, _ := json.Marshal(buildPostPayload(signer, t, text))
 	req, _ := http.NewRequest("POST", "https://api.neynar.com/v2/farcaster/cast/", bytes.NewReader(payload))
 	req.Header.Set("x-api-key", key)
 	req.Header.Set("Content-Type", "application/json")

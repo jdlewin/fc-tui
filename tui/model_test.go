@@ -120,3 +120,35 @@ func TestPostCastNeedsSigner(t *testing.T) {
 		t.Fatal("missing signer should error before network")
 	}
 }
+
+func TestReplyKeyTargetsCursorCast(t *testing.T) {
+	m := sizedModel(testCasts())
+	um, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'R'}})
+	m = um.(Model)
+	if !m.composerFocused {
+		t.Fatal("R should focus composer")
+	}
+	if m.target.Reply == nil || m.target.Reply.Hash != "0xabc123" || m.target.Reply.Fid != 10695 {
+		t.Fatalf("R should target cursor cast, got %+v", m.target)
+	}
+}
+
+func TestQuoteKeyTargetsCursorCast(t *testing.T) {
+	m := sizedModel(testCasts())
+	um, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'Q'}})
+	m = um.(Model)
+	if m.target.Quote == nil || m.target.Quote.Hash != "0xabc123" {
+		t.Fatalf("Q should target cursor cast, got %+v", m.target)
+	}
+}
+
+func TestEscClearsReplyTarget(t *testing.T) {
+	m := sizedModel(testCasts())
+	um, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'R'}})
+	m = um.(Model)
+	um, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = um.(Model)
+	if m.target.Reply != nil || m.composerFocused {
+		t.Fatalf("esc should clear target and blur, got %+v focused=%v", m.target, m.composerFocused)
+	}
+}
