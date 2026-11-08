@@ -119,3 +119,22 @@ func TestBuildTopLevelPayload(t *testing.T) {
 		t.Fatalf("top-level should not carry embeds: %v", p)
 	}
 }
+
+func TestMacSoundFor(t *testing.T) {
+	hs, mac := macSoundFor("mention")
+	if hs != "request" || mac != "Sosumi" {
+		t.Fatalf("mention should be Sosumi/request, got %s/%s", hs, mac)
+	}
+	hs, mac = macSoundFor("reply")
+	if mac != "Frog" {
+		t.Fatalf("reply should be Frog, got %s", mac)
+	}
+	hs, mac = macSoundFor("quote")
+	if mac != "Frog" {
+		t.Fatalf("quote should be Frog, got %s", mac)
+	}
+	_, mac = macSoundFor("like")
+	if mac != "" {
+		t.Fatalf("like should stay silent, got %s", mac)
+	}
+}

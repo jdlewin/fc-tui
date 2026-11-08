@@ -152,3 +152,21 @@ func TestEscClearsReplyTarget(t *testing.T) {
 		t.Fatalf("esc should clear target and blur, got %+v focused=%v", m.target, m.composerFocused)
 	}
 }
+
+func TestNotifPrimingHushesFirstLoad(t *testing.T) {
+	m := sizedModel(testCasts())
+	items := []notif{{Type: "mention", Hash: "0x1", Author: "a", Text: "hi"}}
+	um, cmd := m.Update(notifsLoadedMsg{items})
+	m = um.(Model)
+	if cmd != nil {
+		t.Fatal("first notif load should stay silent")
+	}
+	if !m.seenNotifs["mention:0x1"] {
+		t.Fatal("first load should mark seen")
+	}
+	um2, cmd2 := m.Update(notifsLoadedMsg{[]notif{{Type: "mention", Hash: "0x2", Author: "b", Text: "yo"}}})
+	_ = um2
+	if cmd2 == nil {
+		t.Fatal("second load with fresh mention should ring")
+	}
+}

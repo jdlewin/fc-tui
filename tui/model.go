@@ -59,6 +59,8 @@ type Model struct {
 	fetchError       string
 	loading          bool
 	seen             map[string]bool
+	seenNotifs       map[string]bool
+	notifPrimed      bool
 	suppressNotify   bool // true until first network refresh lands
 }
 
@@ -79,6 +81,7 @@ func NewModel(apiKey, fid, feedPath string, initial []Cast) Model {
 		casts:          initial,
 		composer:       ti,
 		seen:           seen,
+		seenNotifs:     map[string]bool{},
 		suppressNotify: true,
 	}
 }
@@ -86,7 +89,9 @@ func NewModel(apiKey, fid, feedPath string, initial []Cast) Model {
 func (m Model) Init() tea.Cmd {
 	return tea.Batch(
 		fetchFeedCmd(m.apiKey, m.fid, m.feedPath),
+		fetchNotifsCmd(m.apiKey, m.fid),
 		scheduleRefresh(),
+		scheduleNotif(),
 	)
 }
 
@@ -245,6 +250,36 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case notifyDoneMsg:
+		return m, nil
+
+	case notifTickMsg:
+		return m, tea.Batch(fetchNotifsCmd(m.apiKey, m.fid), scheduleNotif())
+
+	case notifsLoadedMsg:
+		if !m.notifPrimed {
+			m.notifPrimed = true
+			for _, n := range msg.items {
+				m.seenNotifs[n.Type+":"+n.Hash] = true
+			}
+			return m, nil
+		}
+		var cmds []tea.Cmd
+		for _, n := range msg.items {
+			k := n.Type + ":" + n.Hash
+			if m.seenNotifs[k] {
+				continue
+			}
+			m.seenNotifs[k] = true
+			hs, mac := macSoundFor(n.Type)
+			body := "@" + n.Author + ": " + oneLine(n.Text, 120)
+			cmds = append(cmds, notifyTypedCmd(notifTitle(n), body, hs, mac))
+		}
+		if len(cmds) == 0 {
+			return m, nil
+		}
+		return m, tea.Batch(cmds...)
+
+	case notifErrMsg:
 		return m, nil
 
 	case tea.KeyMsg:

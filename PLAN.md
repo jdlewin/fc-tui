@@ -9,6 +9,7 @@ Goal: Read and post Farcaster from the Bubble Tea TUI (Mac, Linux, tmux)
 - [x] Post from the TUI and confirm round-trip — live 08 Nov as donniecast, cast ab0b6b6e, success true
 - [x] Harden composer path 08 Nov — 3 submit tests, backend empty-cast guard, dotenv quote fix, README TUI-first
 - [x] Replies + quotes 08 Nov — TUI R/Q keys with esc-cancel, backend -parent/-quote-hash flags, post.sh --reply/--quote, 6 new tests, live-tested by jd same day
+- [x] Typed notifs 08 Nov — mentions/replies/quotes poll 5 min, Sosumi for mentions Frog for replies+quotes, first load silent, 2 new tests
 
 ## Paused (Quickshell)
 

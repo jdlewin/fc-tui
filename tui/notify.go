@@ -11,14 +11,38 @@ import (
 type notifyDoneMsg struct{}
 
 func notifyCmd(title, body string) tea.Cmd {
+	return notifyTypedCmd(title, body, "none", "")
+}
+
+// notifyTypedCmd shows a herdr note and optionally plays a Mac system sound.
+// sound is a herdr chime (none/done/request); macSound names a file in
+// /System/Library/Sounds without extension ("" = silent). afplay missing
+// (Linux) means visual only.
+func notifyTypedCmd(title, body, sound, macSound string) tea.Cmd {
 	return func() tea.Msg {
+		if macSound != "" {
+			if player, err := exec.LookPath("afplay"); err == nil {
+				_ = exec.Command(player, "/System/Library/Sounds/"+macSound+".aiff").Run()
+			}
+		}
 		herdr, err := exec.LookPath("herdr")
 		if err != nil {
 			return notifyDoneMsg{}
 		}
-		cmd := exec.Command(herdr, "notification", "show", title, "--body", body)
-		_ = cmd.Run()
+		_ = exec.Command(herdr, "notification", "show", title, "--body", body, "--sound", sound).Run()
 		return notifyDoneMsg{}
+	}
+}
+
+// macSoundFor maps a Farcaster notification type to jd's picks.
+func macSoundFor(notifType string) (herdrSound, mac string) {
+	switch notifType {
+	case "mention", "mentions":
+		return "request", "Sosumi"
+	case "reply", "replies", "quote", "quotes":
+		return "done", "Frog"
+	default:
+		return "none", ""
 	}
 }
 

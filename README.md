@@ -37,6 +37,8 @@ Keys: `j/k` move · `enter` cast detail · `i` write · `R` reply · `Q` quote �
 Replies target the highlighted cast as parent, quotes embed it. Esc cancels.
 New casts pop a `herdr notification show` alert when run inside herdr.
 Auto-refreshes every 2 min, same as the bar.
+Mentions, replies, and quotes poll every 5 min: mentions play Sosumi,
+replies and quotes play Frog, only on Mac (afplay). First load stays silent.
 
 ## Run UI (Linux box with Quickshell)
 
