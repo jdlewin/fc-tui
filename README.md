@@ -1,6 +1,6 @@
 # fc-tui — Farcaster feed for Quickshell (Go backend + QML bar)
 
-Backend uses ~9MB RAM, 6.5MB binary. Good for 8GB laptops.
+Backend uses ~10MB RAM, 12MB binary. Good for 8GB laptops.
 Quickshell UI runs on Linux only (Wayland). Backend runs anywhere Go runs.
 
 ## Setup (both machines)
@@ -41,14 +41,23 @@ Change feed: `FEED_FID=your_fid ./refresh.sh`
 
 ## Posting (quick write)
 
-One-time setup (no mnemonic needed):
+One-time setup — the backend signs locally with your recovery phrase,
+registers the signer with Neynar, and prints an approval link:
 ```
+# 1. put your Warpcast recovery phrase in .env (12 words, stays on this laptop)
+# 2. then:
 ./signer-setup.sh
-# follow the printed steps: dev.neynar.com -> your app -> Signers
-# approve in the phone app, then:
-./signer-setup.sh PASTE-UUID-HERE
+# open the printed URL in the phone app, approve, press ENTER
 # saves SIGNER_UUID to .env
 ```
+
+Security notes:
+- `FARCASTER_DEVELOPER_MNEMONIC` is your master recovery phrase. Anyone with
+  it owns the account. Keep `.env` at chmod 600, never commit it (gitignored),
+  never paste it in chat. You can delete that line from `.env` after setup —
+  only `SIGNER_UUID` (revocable) is needed to post.
+- Sponsorship defaults to Neynar (gas covered, costs credits). The approval
+  screen shows who pays.
 
 Then post from terminal or from the bar's composer box:
 ```

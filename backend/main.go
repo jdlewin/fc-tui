@@ -67,7 +67,12 @@ func main() {
 	}
 
 	postText := flag.String("post", "", "post a cast with this text")
+	setup := flag.Bool("signer-setup", false, "one-time signer setup (create+sign+register, print approval URL)")
 	flag.Parse()
+	if *setup {
+		signerSetup(key)
+		return
+	}
 	if *postText != "" {
 		postCast(key, *postText)
 		return
