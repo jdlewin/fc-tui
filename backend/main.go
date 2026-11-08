@@ -140,6 +140,10 @@ func postCast(key, text string) {
 		fmt.Fprintln(os.Stderr, "missing SIGNER_UUID — run ./signer-setup.sh once, then approve in Warpcast")
 		os.Exit(1)
 	}
+	if strings.TrimSpace(text) == "" {
+		fmt.Fprintln(os.Stderr, "empty cast")
+		os.Exit(1)
+	}
 	if len([]rune(text)) > 320 {
 		fmt.Fprintln(os.Stderr, "cast too long (320 max)")
 		os.Exit(1)

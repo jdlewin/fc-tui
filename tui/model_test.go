@@ -84,3 +84,39 @@ func TestEmptyFeed(t *testing.T) {
 		t.Fatalf("empty state missing:\n%s", v)
 	}
 }
+
+func TestComposerEnterValidatesEmpty(t *testing.T) {
+	m := sizedModel(testCasts())
+	um, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'i'}})
+	m = um.(Model)
+	m.composer.SetValue("   ")
+	um, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m = um.(Model)
+	if cmd != nil {
+		t.Fatal("empty cast should not produce a post command")
+	}
+	if !m.postIsErr || m.postStatus == "" {
+		t.Fatalf("empty cast should set error status, got %q", m.postStatus)
+	}
+}
+
+func TestComposerEnterPostsValid(t *testing.T) {
+	m := sizedModel(testCasts())
+	um, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'i'}})
+	m = um.(Model)
+	m.composer.SetValue("hello")
+	um, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m = um.(Model)
+	if cmd == nil {
+		t.Fatal("valid cast should produce a post command")
+	}
+	if m.postStatus != "Posting…" {
+		t.Fatalf("expected Posting status, got %q", m.postStatus)
+	}
+}
+
+func TestPostCastNeedsSigner(t *testing.T) {
+	if err := postCast("key", "", "hello"); err == nil {
+		t.Fatal("missing signer should error before network")
+	}
+}

@@ -1,17 +1,25 @@
-# fc-tui — Farcaster feed for Quickshell (Go backend + QML bar)
+# fc-tui — Farcaster feed + posting TUI (Go backend + Bubble Tea, Quickshell bar paused)
 
 Backend uses ~10MB RAM, 12MB binary. Good for 8GB laptops.
-Quickshell UI runs on Linux only (Wayland). Backend runs anywhere Go runs.
+TUI runs anywhere Go runs: Mac, Linux, tmux/zellij/herdr. Quickshell bar is paused.
 
 ## Setup (both machines)
 
 1. Copy your key:
 ```
 cp .env.example .env
-# edit .env, put NEYNAR_API_KEY=xxx (no quotes)
+# edit .env: NEYNAR_API_KEY needs no quotes,
+# FARCASTER_DEVELOPER_MNEMONIC MUST stay quoted (12 words, shell sources this file)
 ```
 
-2. Test backend (Mac or Linux):
+2. One-time signer (posts as your fid, Neynar sponsors gas):
+```
+./signer-setup.sh
+# open the printed URL on your phone, approve, press ENTER
+# saves SIGNER_UUID to .env
+```
+
+3. Test backend (Mac or Linux):
 ```
 ./refresh.sh
 # prints 15 casts, writes feed.json
